@@ -13,16 +13,17 @@ int main()
 	View view1 = views.create_view({0, 0}, {30, 30});
 	View view2 = views.create_subview(view1, {2, 2}, {25, 25});
 	View view3 = views.create_subview(view2, {2, 2}, {20, 20});
-	View view4 = views.create_subview(view3 ,{2, 2}, {15, 15});
 
 	for(int i = 0; i < 60; i++) {
-		view1->screen_buffer.fill({{{(Color)((1 + i) % 7 + 1)}}, ' '});
-		view2->screen_buffer.fill({{{(Color)((2 + i) % 7 + 1)}}, ' '});
-		view3->screen_buffer.fill({{{(Color)((3 + i) % 7 + 1)}}, ' '});
-		view4->screen_buffer.fill({{{(Color)((4 + i) % 7 + 1)}}, ' '});
-		
+		//view1->screen_buffer.fill({{{(Color)((1 + i) % 7 + 1), (Color)((1 + i) % 7 + 1)}}});
+		view2->screen_buffer.fill({{{(Color)((2 + i) % 7 + 1), (Color)((2 + i) % 7 + 1)}}});
+		//view3->screen_buffer.fill({{{(Color)((3 + i) % 7 + 1), (Color)((3 + i) % 7 + 1)}}});
+		view1->screen_buffer.draw_line({0, 0}, {29, (i % 30)}, {{{Color::transparency, Color::white}}, '*'});
+		view3->screen_buffer.draw_line({0, (i % 20)}, {(i % 20), 19}, {{{Color::black, Color::transparency}}, '#'});
+
 		views.draw();
 		this_thread::sleep_for(milliseconds(200));
+		standart_screen.clear();
 	}
 
 	// ==================== debug out ================
@@ -30,22 +31,11 @@ int main()
 	               "; height: ", standart_screen.cells.size(1)};
 	for(int i = 0; i < views.views.size(); i++)
 	{
-		log_out += {"view", i + 1, " x: ", views[i].x, "; y: ", views[i].y,
-		               "; width: ", views[i].width, "; height: ", views[i].height};	
+		log_out += {"view", i + 1, " x: ", views[i].xy.x, "; y: ", views[i].xy.y,
+		               "; width: ", views[i].lengths.width, "; height: ", views[i].lengths.height};	
 		log_out += {"screen_buffer", i + 1, " width: ", views[i].screen_buffer.cells.size(0),
 		               "; height: ", views[i].screen_buffer.cells.size(1)};
-	}
-	log_out += {"Color::transparency ", (int)Color::transparency};
-	log_out += {"Color::black ",        (int)Color::black};
-	log_out += {"Color::red ",          (int)Color::red};
-	log_out += {"Color::green ",        (int)Color::green};
-	log_out += {"Color::yellow ",       (int)Color::yellow};
-	log_out += {"Color::blue ",         (int)Color::blue};
-	log_out += {"Color::magenta ",      (int)Color::magenta};
-	log_out += {"Color::cyan ",         (int)Color::cyan};
-	log_out += {"Color::white ",        (int)Color::white};
-	log_out += {"Color::end ",          (int)Color::end};
-	log_out += {"Color::begin ",        (int)Color::begin};
+	}	
 	
 	concluding();
 }

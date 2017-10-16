@@ -6,7 +6,7 @@
 namespace gcons {
 	string get_version()
 	{
-		return "0.1:d2017-10-15:l600";
+		return "0.1.1:d2017-10-16";
 	}
 
 	void init()
@@ -45,6 +45,184 @@ namespace gcons {
 	Allign::Allign()
 		: right{0}, left{0}, up{0}, down{0}
 	{ }
+
+	Coords::Coords(int n)
+		: x{n}, y{n}
+	{ }
+
+	Coords::Coords(int x, int y)
+		: x{x}, y{y}
+	{ }
+
+	Coords Coords::operator + (Lengths const& lengths)
+	{
+		return *new Coords{x + lengths.width, y + lengths.height};
+	}
+
+	Coords Coords::operator + (Distance const& distance)
+	{
+		return *new Coords{x + distance.begin, y + distance.end};
+	}
+
+	Coords Coords::operator + (Coords const& coords)
+	{
+		return *new Coords{x + coords.x, y + coords.y};
+	}
+
+	void Coords::operator += (Lengths const& lengths)
+	{
+		x += lengths.width;
+		y += lengths.height;
+	}
+
+	void Coords::operator += (Distance const& distance)
+	{
+		x += distance.begin;
+		y += distance.end;
+	}
+
+	void Coords::operator += (Coords const& coords)
+	{
+		x += coords.x;
+		y += coords.y;
+	}
+
+	Coords Coords::operator - (Coords const& coords)
+	{
+		return *new Coords{x - coords.x, y - coords.y};
+	}
+
+	void Coords::operator -= (Coords const& coords)
+	{
+		x -= coords.x;
+		y -= coords.y;
+	}
+
+	Coords Coords::operator / (Coords const& coords)
+	{
+		return *new Coords{x / coords.x, y - coords.y};
+	}
+
+	template<class T>
+	Coords Coords::operator / (T const& t)
+	{
+		return *new Coords{x / t, y / t};
+	}
+
+	Coords Coords::operator * (Coords const& coords)
+	{
+		return *new Coords{x * coords.x, y*coords.y};
+	}
+
+	template<class T>
+	Coords Coords::operator * (T const& t)
+	{
+		return *new Coords{x * t, y * t};
+	}
+
+	Lengths::Lengths(int n)
+		: width{n}, height{n}
+	{ }
+
+	Lengths::Lengths(int width, int height)
+		: width{width}, height{height}
+	{ }
+
+	Lengths::Lengths(Coords coords)
+		: width{coords.x}, height{coords.y}
+	{ }
+
+	Lengths Lengths::operator + (Lengths const& lengths)
+	{
+		return *new Lengths{width + lengths.width, height + lengths.height};
+	}
+
+	Lengths Lengths::operator + (Distance const& distance)
+	{
+		return *new Lengths{width + distance.begin, height + distance.end};
+	}
+
+	Lengths Lengths::operator + (Coords const& coords)
+	{
+		return *new Lengths{width + coords.x, height + coords.y};
+	}
+
+	void Lengths::operator += (Lengths const& lengths)
+	{
+		width += lengths.width;
+		height += lengths.height;
+	}
+
+	void Lengths::operator += (Distance const& distance)
+	{
+		width += distance.begin;
+		height += distance.end;
+	}
+
+	void Lengths::operator += (Coords const& coords)
+	{
+		width += coords.x;
+		height += coords.y;
+	}
+
+	template<class T>
+	Lengths Lengths::operator * (T t)
+	{
+		return *new Lengths{width * t, height * t};
+	}
+
+	template<class T>
+	Lengths Lengths::operator / (T t)
+	{
+		return *new Lengths{width / t, height / t};
+	}
+
+	void Lengths::operator = (Coords const& coords)
+	{
+		width = coords.x;
+		height = coords.y;
+	}
+
+	Distance::Distance(int n)
+		: begin{n}, end{n}
+	{ }
+
+	Distance::Distance(int begin, int end)
+		: begin{begin}, end{end}
+	{ }
+
+	Distance Distance::operator + (Lengths const& lengths)
+	{
+		return *new Distance{begin + lengths.width, end + lengths.height};
+	}
+
+	Distance Distance::operator + (Distance const& distance)
+	{
+		return *new Distance{begin + distance.begin, end + distance.end};
+	}
+
+	Distance Distance::operator + (Coords const& coords)
+	{
+		return *new Distance{begin + coords.x, end + coords.y};
+	}
+
+	void Distance::operator += (Lengths const& lengths)
+	{
+		begin += lengths.width;
+		end += lengths.height;
+	}
+
+	void Distance::operator += (Distance const& distance)
+	{
+		begin += distance.begin;
+		end += distance.end;
+	}
+
+	void Distance::operator += (Coords const& coords)
+	{
+		begin += coords.x;
+		end += coords.y;
+	}
 
 	void Cells::resize(int x, int y)
 	{
@@ -101,9 +279,9 @@ namespace gcons {
 			draw_cell({x, row}, brush);
 	}
 
-	void Screen_buffer::draw_row(int row, Coords beg_end, Brush brush)
+	void Screen_buffer::draw_row(int row, Distance distance, Brush brush)
 	{
-		for(int x = beg_end.x; x <= beg_end.y; x++)
+		for(int x = distance.begin; x <= distance.end; x++)
 			draw_cell({x, row}, brush);
 	}
 
@@ -113,22 +291,20 @@ namespace gcons {
 			draw_cell({column, y}, brush);
 	}
 
-	void Screen_buffer::draw_column(int column, Coords beg_end, Brush brush)
+	void Screen_buffer::draw_column(int column, Distance distance, Brush brush)
 	{
-		for(int y = beg_end.x; y <= beg_end.y; y++)
+		for(int y = distance.begin; y <= distance.end; y++)
 			draw_cell({column, y}, brush);
 	}
 
 	void Screen_buffer::draw_line(Coords xy1, Coords xy2, Brush brush)
 	{
-		int x = 0, y = 0;
-		int x_len = xy2.x - xy1.x;
-		int y_len = xy2.y - xy1.y;
-		int max_len = (x_len > y_len) ? x_len : y_len;
+		Coords xy{0};
+		Lengths len = xy2 - xy1;
+		int max_len = (len.width > len.height) ? len.width : len.height;
 		for(int i = 0; i <= max_len; i++) {
-			x = xy1.x + x_len * i / max_len;
-			y = xy1.y + y_len * i / max_len;
-			draw_cell({x, y}, brush);
+			xy = xy1 + len * i / max_len;
+			draw_cell(xy, brush);
 		}
 	}
 
@@ -223,6 +399,35 @@ namespace gcons {
 		draw({0, 0}, {cells.size(0), cells.size(1)});
 	}
 
+	int Standart_screen::width()
+	{
+		using namespace ncurses;
+		int width, oops;
+		getmaxyx(stdscr, oops, width);
+		return width;
+	}
+
+	int Standart_screen::height()
+	{
+		using namespace ncurses;
+		int height, oops;
+		getmaxyx(stdscr, height, oops);
+		return height;
+	}
+
+	Coords Standart_screen::width_height()
+	{
+		using namespace ncurses;
+		int width, height;
+		getmaxyx(stdscr, height, width);
+		return {width, height};
+	}
+
+	void Standart_screen::clear()
+	{
+		cells.fill({{Color::black, Color::white}, ' ', false});
+	}
+
 	void Standart_screen::draw()
 	{
 		using namespace ncurses;
@@ -279,65 +484,62 @@ namespace gcons {
 	void View_::draw()
 	{
 		if (parent == nullptr)
-			screen_buffer.draw({x, y}, {x + width, y + height});
+			screen_buffer.draw(xy, xy + lengths);
 		else
 		{
-			int parent_x = 0, parent_y = 0;
+			Coords parent_xy{0};
 			View_* view_ = this;
 			while(view_->parent != nullptr) {
-				parent_x += view_->parent->x;
-				parent_y += view_->parent->y;
+				parent_xy += view_->parent->xy;
 				view_ = view_->parent;
 			}
-			screen_buffer.draw({x + parent_x, y + parent_y},
-												 {x + parent_x + width, y + parent_y + height});
+			screen_buffer.draw(xy + parent_xy,
+												 xy + parent_xy + lengths);
 		}
 		items.draw();
 	}
 
-	View Views::create_view(Coords xy, Coords wid_hei)
+	View Views::create_view(Coords xy, Lengths lengths)
 	{
 		views.push_back(*new View_);
 		View_* view = &views[views.size() - 1];
-		view->x = xy.x;
-		view->y = xy.y;
-		view->width = wid_hei.x;
-		view->height = wid_hei.y;
+		view->xy = xy;
+		view->lengths = lengths;
 		view->is_viewed = true;
-		view->screen_buffer.cells.resize(view->width, view->height);
+		view->screen_buffer.cells.resize(view->lengths.width, view->lengths.height);
 
 		return *new View(views.size() - 1);	
 	}
 
-	View Views::create_view(Coords wid_hei)
+	View Views::create_view(Lengths lengths)
 	{
-		return create_view({0, 0}, wid_hei);
+		return create_view({0, 0}, lengths);
 	}
 	
 	View Views::create_view()
 	{
-		int width, height;
-		{ using namespace ncurses; getmaxyx(stdscr, height, width); }
-		return create_view({0, 0}, {width, height});
+		Lengths lengths(0);
+		{ using namespace ncurses; getmaxyx(stdscr, lengths.height, lengths.width); }
+		return create_view({0, 0}, lengths);
 	}
 
-	View Views::create_subview(View& view, Coords xy, Coords wid_hei)
+	View Views::create_subview(View& view, Coords xy, Lengths lengths)
 	{
-		View sub_view = create_view(xy, wid_hei);
+		View sub_view = create_view(xy, lengths);
 		sub_view->parent = &view;
 		view->children.push_back(&sub_view);
 
 		return sub_view;
 	}
 
-	View Views::create_subview(View& view, Coords wid_hei)
+	View Views::create_subview(View& view, Lengths lengths)
 	{
-		return create_subview(view, {0, 0}, wid_hei);
+		return create_subview(view, {0, 0}, lengths);
 	}
 
 	View Views::create_subview(View& view)
 	{
-		return create_subview(view, {0, 0}, {view->width, view->height});
+		return create_subview(view, {0, 0}, view->lengths);
 	}
 
 	void Views::draw()

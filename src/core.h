@@ -17,6 +17,8 @@ namespace gcons {
 	struct Allign;
 	struct Color_pair;
 	struct Coords;
+	struct Lengths;
+	struct Distance;
 	struct Brush;
 	struct Cell;
 	struct Cells;

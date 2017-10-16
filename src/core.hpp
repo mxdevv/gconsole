@@ -33,7 +33,64 @@ namespace gcons {
 	};
 
 	struct Coords {
+		Coords() { }
+		Coords(int n);
+		Coords(int x, int y);
+
 		int x = nullable, y = nullable;
+
+		Coords operator + (Lengths const& lengths);
+		Coords operator + (Distance const& distance);
+		Coords operator + (Coords const& coords);
+		void operator += (Lengths const& lengths);
+		void operator += (Distance const& distance);
+		void operator += (Coords const& coords);
+		
+		Coords operator - (Coords const& coords);
+		void operator -= (Coords const& coords);
+		Coords operator / (Coords const& coords);
+		template<class T>
+			Coords operator / (T const& t);
+		Coords operator * (Coords const& coords);
+		template<class T>
+			Coords operator * (T const& t);
+	};
+
+	struct Lengths {
+		Lengths() { }
+		Lengths(int n);
+		Lengths(int width, int height);
+		Lengths(Coords coords);
+
+		int width = nullable, height = nullable;
+
+		Lengths operator + (Lengths const& lengths);
+		Lengths operator + (Distance const& distance);
+		Lengths operator + (Coords const& coords);
+		void operator += (Lengths const& lengths);
+		void operator += (Distance const& distance);
+		void operator += (Coords const& coords);
+		
+		template<class T>
+			Lengths operator * (T t);
+		template<class T>
+			Lengths operator / (T t);
+		void operator = (Coords const& coords);
+	};
+
+	struct Distance {
+		Distance() { }
+		Distance(int n);
+		Distance(int begin, int end);
+
+		int begin = nullable, end = nullable;
+
+		Distance operator + (Lengths const& lengths);
+		Distance operator + (Distance const& distance);
+		Distance operator + (Coords const& coords);
+		void operator += (Lengths const& lengths);
+		void operator += (Distance const& distance);
+		void operator += (Coords const& coords);
 	};
 
 	struct Brush {
@@ -69,9 +126,9 @@ namespace gcons {
 		void draw_cell(Coords xy, Brush brush); // Realized
 		void draw_point(Coords xy, Brush brush);
 		void draw_row(int row, Brush brush); // Realized, not size, not multicolors
-		void draw_row(int row, Coords beg_end, Brush brush); // Realized, not size, not multicolors
+		void draw_row(int row, Distance distance, Brush brush); // Realized, not size, not multicolors
 		void draw_column(int column, Brush brush); // Realized, not size, not multicolors
-		void draw_column(int column, Coords beg_end, Brush brush); // Realized, not size, not multicolors
+		void draw_column(int column, Distance distance, Brush brush); // Realized, not size, not multicolors
 		void draw_line(Coords xy1, Coords xy2, Brush brush); // Realized, not size, not multicolors
 		void draw_triangle(...);
 		void draw_polygon(...);
@@ -93,7 +150,15 @@ namespace gcons {
 	};
 
 	struct Standart_screen : Screen_buffer_base {
+		int width();
+		int height();
+		Coords width_height();
+
+		void clear();
+
 		void draw();
+
+		int x = 0, y = 0;
 	}
 	standart_screen;
 
@@ -115,17 +180,17 @@ namespace gcons {
 
 		void hide();
 		void show();
-		void resize(Coords lengths);
-		void cut(Coords cut_lengths);
+		void resize(Lengths lengths);
+		void cut(Lengths cut_lengths);
 		void move(Coords xy);
 		
 		void draw();
 	//private:
 		View_* parent = nullptr;
 		vector<View_*> children;
-		int x = nullable, y = nullable;
-		int width = nullable, height = nullable;
-		int cut_width = 0, cut_height = 0;
+		Coords xy;	
+		Lengths lengths;
+		Lengths cut_lengths;
 		Allign allign;
 		int depth = 0;
 		bool is_viewed = false;
@@ -146,11 +211,11 @@ namespace gcons {
 		vector<View_> views;
 
 		View create_view();
-		View create_view(Coords wid_hei);
-		View create_view(Coords xy, Coords wid_hei);
+		View create_view(Lengths lengths);
+		View create_view(Coords xy, Lengths lengths);
 		View create_subview(View& view);
-		View create_subview(View& view, Coords wid_hei);
-		View create_subview(View& view, Coords xy, Coords wid_hei);
+		View create_subview(View& view, Lengths lengths);
+		View create_subview(View& view, Coords xy, Lengths lengths);
 		void draw();
 
 		int size();
