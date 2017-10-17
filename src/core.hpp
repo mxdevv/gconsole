@@ -18,15 +18,6 @@ namespace gcons {
 		end, begin = 0
 	};
 
-	struct Allign {
-		Allign();
-
-		int right : 1;
-		int left : 1;
-		int up : 1;
-		int down : 1;
-	};
-
 	struct Color_pair {
 		Color background = Color::transparency;
 		Color foreground = Color::transparency;
@@ -70,12 +61,14 @@ namespace gcons {
 		void operator += (Lengths const& lengths);
 		void operator += (Distance const& distance);
 		void operator += (Coords const& coords);
+		Lengths operator - (Lengths const& lenghts);
 		
 		template<class T>
 			Lengths operator * (T t);
 		template<class T>
 			Lengths operator / (T t);
 		void operator = (Coords const& coords);
+		bool operator != (Lengths const& lengths);
 	};
 
 	struct Distance {
@@ -108,7 +101,8 @@ namespace gcons {
 	struct Cells {
 		vector<vector<Cell>> cells;
 
-		void resize(int x, int y);
+		void resize(int width, int height);
+		void resize(Lengths lengths);
 		void fill(Cell cell);
 		int size();
 		int size(int deep);
@@ -152,13 +146,11 @@ namespace gcons {
 	struct Standart_screen : Screen_buffer_base {
 		int width();
 		int height();
-		Coords width_height();
+		Lengths lengths();
 
 		void clear();
 
 		void draw();
-
-		int x = 0, y = 0;
 	}
 	standart_screen;
 
@@ -181,17 +173,15 @@ namespace gcons {
 		void hide();
 		void show();
 		void resize(Lengths lengths);
-		void cut(Lengths cut_lengths);
 		void move(Coords xy);
 		
+		void update();
 		void draw();
-	//private:
+		
 		View_* parent = nullptr;
 		vector<View_*> children;
-		Coords xy;	
+		Coords xy;
 		Lengths lengths;
-		Lengths cut_lengths;
-		Allign allign;
 		int depth = 0;
 		bool is_viewed = false;
 	};

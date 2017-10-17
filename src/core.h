@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <chrono>
+#include <ctime>
 #include "consts.h"
 
 namespace gcons {

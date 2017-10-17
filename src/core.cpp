@@ -6,7 +6,7 @@
 namespace gcons {
 	string get_version()
 	{
-		return "0.1.1:d2017-10-16";
+		return "0.1.2";
 	}
 
 	void init()
@@ -20,9 +20,9 @@ namespace gcons {
 		init_pallette();
 		{
 			using namespace ncurses;
-			int x, y;
-			getmaxyx(stdscr, y, x);
-			standart_screen.cells.resize(x, y);
+			Lengths lengths;
+			getmaxyx(stdscr, lengths.height, lengths.width);
+			standart_screen.cells.resize(lengths);
 			standart_screen.cells.fill({ { Color::black, Color::white }, ' ', true });
 		}
 	}
@@ -41,10 +41,6 @@ namespace gcons {
 		log_out += {"Version: gconsole ", get_version()};
 		log_out();
 	}
-
-	Allign::Allign()
-		: right{0}, left{0}, up{0}, down{0}
-	{ }
 
 	Coords::Coords(int n)
 		: x{n}, y{n}
@@ -165,6 +161,11 @@ namespace gcons {
 		height += coords.y;
 	}
 
+	Lengths Lengths::operator - (Lengths const& lengths)
+	{
+		return *new Lengths{width - lengths.width, height - lengths.height};
+	}
+
 	template<class T>
 	Lengths Lengths::operator * (T t)
 	{
@@ -181,6 +182,13 @@ namespace gcons {
 	{
 		width = coords.x;
 		height = coords.y;
+	}
+
+	bool Lengths::operator != (Lengths const& lengths)
+	{
+		if (width != lengths.width) return true;
+		if (height != lengths.height) return true;
+		return false;
 	}
 
 	Distance::Distance(int n)
@@ -224,11 +232,18 @@ namespace gcons {
 		end += coords.y;
 	}
 
-	void Cells::resize(int x, int y)
+	void Cells::resize(int width, int height)
 	{
-		cells.resize(x);
+		cells.resize(width);
 		for(vector<Cell>& in_cells_x : cells)
-			in_cells_x.resize(y);
+			in_cells_x.resize(height);
+	}
+
+	void Cells::resize(Lengths lengths)
+	{
+		cells.resize(lengths.width);
+		for(vector<Cell>& in_cells_x : cells)
+			in_cells_x.resize(lengths.height);
 	}
 
 	void Cells::fill(Cell cell)
@@ -415,12 +430,12 @@ namespace gcons {
 		return height;
 	}
 
-	Coords Standart_screen::width_height()
+	Lengths Standart_screen::lengths()
 	{
 		using namespace ncurses;
-		int width, height;
-		getmaxyx(stdscr, height, width);
-		return {width, height};
+		Lengths lengths;
+		getmaxyx(stdscr, lengths.height, lengths.width);
+		return lengths;
 	}
 
 	void Standart_screen::clear()
@@ -481,6 +496,22 @@ namespace gcons {
 		return &views[i];
 	}
 
+	void View_::resize(Lengths lengths)
+	{
+		this->lengths = lengths;
+		screen_buffer.cells.resize(lengths);
+	}
+
+	void View_::move(Coords xy)
+	{
+		this->xy = xy;
+	}
+
+	void View_::update()
+	{
+		log_out += "View_::update is not realized";
+	}
+
 	void View_::draw()
 	{
 		if (parent == nullptr)
@@ -506,7 +537,7 @@ namespace gcons {
 		view->xy = xy;
 		view->lengths = lengths;
 		view->is_viewed = true;
-		view->screen_buffer.cells.resize(view->lengths.width, view->lengths.height);
+		view->screen_buffer.cells.resize(view->lengths);
 
 		return *new View(views.size() - 1);	
 	}
@@ -518,7 +549,7 @@ namespace gcons {
 	
 	View Views::create_view()
 	{
-		Lengths lengths(0);
+		Lengths lengths{0};
 		{ using namespace ncurses; getmaxyx(stdscr, lengths.height, lengths.width); }
 		return create_view({0, 0}, lengths);
 	}

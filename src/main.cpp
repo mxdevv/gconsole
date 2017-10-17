@@ -15,9 +15,9 @@ int main()
 	View view3 = views.create_subview(view2, {2, 2}, {20, 20});
 
 	for(int i = 0; i < 60; i++) {
-		//view1->screen_buffer.fill({{{(Color)((1 + i) % 7 + 1), (Color)((1 + i) % 7 + 1)}}});
+		view3->resize({20 + (i % 4), 20});
+		view3->screen_buffer.fill({{{Color::white}}});
 		view2->screen_buffer.fill({{{(Color)((2 + i) % 7 + 1), (Color)((2 + i) % 7 + 1)}}});
-		//view3->screen_buffer.fill({{{(Color)((3 + i) % 7 + 1), (Color)((3 + i) % 7 + 1)}}});
 		view1->screen_buffer.draw_line({0, 0}, {29, (i % 30)}, {{{Color::transparency, Color::white}}, '*'});
 		view3->screen_buffer.draw_line({0, (i % 20)}, {(i % 20), 19}, {{{Color::black, Color::transparency}}, '#'});
 
