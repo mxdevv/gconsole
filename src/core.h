@@ -5,18 +5,18 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <chrono>
-#include <ctime>
 #include "consts.h"
 
 namespace gcons {
+	using namespace std;
+
 	namespace ncurses {
 		#include <ncurses.h>
 	}
 	namespace Menu { }
 
 	enum struct Color;
-	struct Allign;
+	enum struct Direction;
 	struct Color_pair;
 	struct Coords;
 	struct Lengths;
@@ -24,8 +24,8 @@ namespace gcons {
 	struct Brush;
 	struct Cell;
 	struct Cells;
-	struct Screen_buffer_base;
-	struct Screen_buffer;
+	struct Surface_base;
+	struct Surface;
 	struct Standart_screen;
 	struct Item;
 	struct Items;

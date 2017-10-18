@@ -4,9 +4,11 @@
 #include "core.hpp"
 
 namespace gcons {
+	using namespace std;
+
 	string get_version()
 	{
-		return "0.1.2";
+		return "0.1.3";
 	}
 
 	void init()
@@ -16,7 +18,9 @@ namespace gcons {
 		ncurses::curs_set(0);
 		ncurses::keypad(ncurses::stdscr, TRUE);
 		ncurses::noecho();
-		ncurses::halfdelay(1);
+		//ncurses::halfdelay(1);
+		//ncurses::nocbreak();
+		ncurses::nodelay(ncurses::stdscr, TRUE);
 		init_pallette();
 		{
 			using namespace ncurses;
@@ -232,6 +236,41 @@ namespace gcons {
 		end += coords.y;
 	}
 
+	Brush::Brush(Color color)
+	{
+		color_pairs.push_back({color, Color::white});
+	}
+
+	Brush::Brush(Color color_back, Color color_fore)
+	{
+		color_pairs.push_back({color_back, color_fore});
+	}
+
+	Brush::Brush(char ch)
+	{
+		this->ch = ch;
+		color_pairs.push_back({Color::black, Color::white});	
+	}
+
+	Brush::Brush(Color_pair color_pair, char ch)
+	{
+		color_pairs.push_back(color_pair);
+		this->ch = ch;
+	}
+
+	Brush::Brush(vector<Color_pair> color_pairs, char ch)
+		: color_pairs{color_pairs}, ch{ch}
+	{ }
+
+	Brush::Brush(Color_pair color_pair)
+	{
+		color_pairs.push_back(color_pair);
+	}
+
+	Brush::Brush(vector<Color_pair> color_pairs)
+		: color_pairs{color_pairs}
+	{ }
+
 	void Cells::resize(int width, int height)
 	{
 		cells.resize(width);
@@ -270,14 +309,14 @@ namespace gcons {
 		return cells[n];
 	}
 
-	void Screen_buffer::draw_cell(Coords xy)
+	void Surface::draw_cell(Coords xy)
 	{
 		cells[xy.x][xy.y].color_pair.background = Color::white;
 		cells[xy.x][xy.y].is_draw = false;
 		is_draw = false;
 	}
 
-	void Screen_buffer::draw_cell(Coords xy, Brush brush)
+	void Surface::draw_cell(Coords xy, Brush brush)
 	{
 		if (brush.color_pairs[0].background != Color::transparency)
 			cells[xy.x][xy.y].color_pair.background = brush.color_pairs[0].background;
@@ -288,31 +327,31 @@ namespace gcons {
 		is_draw = false;
 	}
 
-	void Screen_buffer::draw_row(int row, Brush brush)
+	void Surface::draw_row(int row, Brush brush)
 	{
 		for(int x = 0; x <= cells.size(0); x++)
 			draw_cell({x, row}, brush);
 	}
 
-	void Screen_buffer::draw_row(int row, Distance distance, Brush brush)
+	void Surface::draw_row(int row, Distance distance, Brush brush)
 	{
 		for(int x = distance.begin; x <= distance.end; x++)
 			draw_cell({x, row}, brush);
 	}
 
-	void Screen_buffer::draw_column(int column, Brush brush)
+	void Surface::draw_column(int column, Brush brush)
 	{
 		for(int y = 0; y <= cells.size(1); y++)
 			draw_cell({column, y}, brush);
 	}
 
-	void Screen_buffer::draw_column(int column, Distance distance, Brush brush)
+	void Surface::draw_column(int column, Distance distance, Brush brush)
 	{
 		for(int y = distance.begin; y <= distance.end; y++)
 			draw_cell({column, y}, brush);
 	}
 
-	void Screen_buffer::draw_line(Coords xy1, Coords xy2, Brush brush)
+	void Surface::draw_line(Coords xy1, Coords xy2, Brush brush)
 	{
 		Coords xy{0};
 		Lengths len = xy2 - xy1;
@@ -323,14 +362,14 @@ namespace gcons {
 		}
 	}
 
-	void Screen_buffer::draw_area(Coords xy1, Coords xy2, Brush brush)
+	void Surface::draw_area(Coords xy1, Coords xy2, Brush brush)
 	{
 		for(int x = xy1.x; x <= xy2.x; x++)
 		for(int y = xy1.y; y <= xy2.y; y++)
 			draw_cell({x, y}, brush);
 	}
 
-	void Screen_buffer::draw_frame(Coords xy1, Coords xy2, Brush brush)
+	void Surface::draw_frame(Coords xy1, Coords xy2, Brush brush)
 	{
 		draw_row(xy1.y, {xy1.x, xy2.x}, brush);
 		draw_row(xy2.y, {xy1.x, xy2.x}, brush);
@@ -338,46 +377,87 @@ namespace gcons {
 		draw_column(xy2.x, {xy1.y + 1, xy2.y - 1}, brush);
 	}
 
-	void Screen_buffer::draw_string(Coords xy, string str)
-	{
-		for(int i = 0; i < str.size(); i++)
-			draw_cell({i + xy.x, xy.y}, {{{}}, str[i]});
-	}
-
 	template<typename T>
-	void Screen_buffer::draw_string(Coords xy, T t)
+	void Surface::draw_string(Coords xy, T t)
 	{
 		string str = to_cast<string, T>(t);
 		for(int i = 0; i < str.size(); i++)
-			draw_cell({i + xy.x, xy.y}, {{{}}, str[i]});
+			draw_cell({i + xy.x, xy.y}, {str[i]});
 	}
 
-	void Screen_buffer::draw_string(Coords xy, String_builder string_builder)
+	void Surface::draw_string(Coords xy, String_builder string_builder)
 	{
 		for(int i = 0; i < string_builder.str.size(); i++)
-			draw_cell({i + xy.x, xy.y}, {{{}}, string_builder.str[i]});
+			draw_cell({i + xy.x, xy.y}, {string_builder.str[i]});
 	}
 
-	void Screen_buffer::draw_string(Coords xy, String_builder string_builder, Brush brush)
+	void Surface::draw_string(Coords xy, String_builder string_builder, Brush brush)
 	{
 		for(int i = 0; i < string_builder.str.size(); i++)
 			draw_cell({i + xy.x, xy.y},
-				{{{brush.color_pairs[0].background, brush.color_pairs[0].foreground}}, string_builder.str[i]});
+				{{brush.color_pairs[0]}, string_builder.str[i]});
 	}
 
-	void Screen_buffer::fill(Brush brush)
+	template<typename T>
+	void Surface::draw_string(Coords xy, Direction dir, T t)
+	{
+		string str = to_cast<string, T>(t);
+		for(int i = 0; i < str.size(); i++)
+		switch(dir) {
+			case Direction::up:
+				draw_cell({xy.x, xy.y - i}, {str[i]}); break;
+			case Direction::right:
+				draw_cell({xy.x + i, xy.y}, {str[i]}); break;
+			case Direction::down:
+				draw_cell({xy.x, xy.y + i}, {str[i]}); break;
+			case Direction::left:
+				draw_cell({xy.x - i, xy.y}, {str[i]}); break;
+		}
+	}
+
+	void Surface::draw_string(Coords xy, Direction dir, String_builder string_builder)
+	{
+		for(int i = 0; i < string_builder.str.size(); i++)
+		switch(dir) {
+			case Direction::up:
+				draw_cell({xy.x, xy.y - i}, {string_builder.str[i]}); break;
+			case Direction::right:
+				draw_cell({xy.x + i, xy.y}, {string_builder.str[i]}); break;
+			case Direction::down:
+				draw_cell({xy.x, xy.y + i}, {string_builder.str[i]}); break;
+			case Direction::left:
+				draw_cell({xy.x - i, xy.y}, {string_builder.str[i]}); break;
+		}
+	}
+
+	void Surface::draw_string(Coords xy, Direction dir, String_builder string_builder, Brush brush)
+	{
+		for(int i = 0; i < string_builder.str.size(); i++)
+		switch(dir) {
+			case Direction::up:
+				draw_cell({xy.x, xy.y - i}, {{brush.color_pairs[0]}, string_builder.str[i]}); break;
+			case Direction::right:
+				draw_cell({xy.x + i, xy.y}, {{brush.color_pairs[0]}, string_builder.str[i]}); break;
+			case Direction::down:
+				draw_cell({xy.x, xy.y + i}, {{brush.color_pairs[0]}, string_builder.str[i]}); break;
+			case Direction::left:
+				draw_cell({xy.x - i, xy.y}, {{brush.color_pairs[0]}, string_builder.str[i]}); break;
+		}
+	}
+
+	void Surface::fill(Brush brush)
 	{
 		for(int x = 0; x < cells.size(0); x++)
 		for(int y = 0; y < cells.size(1); y++)
 			draw_cell({x, y}, brush);
 	}
 
-	void Screen_buffer::clear()
+	void Surface::clear()
 	{
 		fill({{{Color::black, Color::white}}, ' '});
 	}
 
-	void Screen_buffer::draw(Coords xy1, Coords xy2)
+	void Surface::draw(Coords xy1, Coords xy2)
 	{
 		if (is_draw == false) {
 		for(int x = 0; x < (xy2.x - xy1.x); x++)
@@ -404,12 +484,12 @@ namespace gcons {
 		}
 	}
 
-	void Screen_buffer::draw(Coords xy)
+	void Surface::draw(Coords xy)
 	{
 		draw(xy, {cells.size(0) - xy.x, cells.size(1) - xy.y});
 	}
 
-	void Screen_buffer::draw()
+	void Surface::draw()
 	{
 		draw({0, 0}, {cells.size(0), cells.size(1)});
 	}
@@ -499,7 +579,7 @@ namespace gcons {
 	void View_::resize(Lengths lengths)
 	{
 		this->lengths = lengths;
-		screen_buffer.cells.resize(lengths);
+		surface.cells.resize(lengths);
 	}
 
 	void View_::move(Coords xy)
@@ -515,7 +595,7 @@ namespace gcons {
 	void View_::draw()
 	{
 		if (parent == nullptr)
-			screen_buffer.draw(xy, xy + lengths);
+			surface.draw(xy, xy + lengths);
 		else
 		{
 			Coords parent_xy{0};
@@ -524,7 +604,7 @@ namespace gcons {
 				parent_xy += view_->parent->xy;
 				view_ = view_->parent;
 			}
-			screen_buffer.draw(xy + parent_xy,
+			surface.draw(xy + parent_xy,
 												 xy + parent_xy + lengths);
 		}
 		items.draw();
@@ -537,7 +617,7 @@ namespace gcons {
 		view->xy = xy;
 		view->lengths = lengths;
 		view->is_viewed = true;
-		view->screen_buffer.cells.resize(view->lengths);
+		view->surface.cells.resize(view->lengths);
 
 		return *new View(views.size() - 1);	
 	}

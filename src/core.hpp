@@ -4,6 +4,8 @@
 #include "core.h"
 
 namespace gcons {	
+	using namespace std;
+
 	enum struct Color {
 		transparency = -1,
 		black,
@@ -16,6 +18,13 @@ namespace gcons {
 		white,
 
 		end, begin = 0
+	};
+
+	enum struct Direction {
+		up,
+		right,
+		down,
+		left
 	};
 
 	struct Color_pair {
@@ -87,6 +96,15 @@ namespace gcons {
 	};
 
 	struct Brush {
+		Brush() { }
+		Brush(Color color);
+		Brush(Color color_back, Color color_fore);
+		Brush(char ch);
+		Brush(Color_pair color_pair, char ch);
+		Brush(vector<Color_pair> color_pairs, char ch);
+		Brush(Color_pair color_pair);
+		Brush(vector<Color_pair> color_pairs);
+
 		vector<Color_pair> color_pairs;
 		char ch = nullable;
 		int size = 1;
@@ -110,12 +128,12 @@ namespace gcons {
 		vector<Cell>& operator [] (int n);
 	};
 
-	struct Screen_buffer_base {
+	struct Surface_base {
 		Cells cells;
 		bool is_draw = false;
 	};
 
-	struct Screen_buffer : Screen_buffer_base {
+	struct Surface : Surface_base {
 		void draw_cell(Coords xy); // Test_realized
 		void draw_cell(Coords xy, Brush brush); // Realized
 		void draw_point(Coords xy, Brush brush);
@@ -129,11 +147,14 @@ namespace gcons {
 		void draw_area(Coords xy1, Coords xy2, Brush brush); // Realized, not size, not multicolors
 		void draw_frame(Coords xy1, Coords xy2, Brush brush); // Realized, not size, not multicolors
 		void draw_style_frame(...);
-		void draw_string(Coords xy, string str); // Realized
 		template<typename T>
 			void draw_string(Coords xy, T t); // Realized
 		void draw_string(Coords xy, String_builder string_builder); // Realized
 		void draw_string(Coords xy, String_builder string_builder, Brush brush); // Realized, not multicolors
+		template<typename T>
+			void draw_string(Coords xy, Direction dir, T t);
+		void draw_string(Coords xy, Direction dir, String_builder string_builder);
+		void draw_string(Coords xy, Direction dir, String_builder string_builder, Brush brush);
 		void draw_window(...);
 		void fill(Brush brush);
 		void clear();
@@ -143,7 +164,7 @@ namespace gcons {
 		void draw(Coords xy1, Coords xy2);
 	};
 
-	struct Standart_screen : Screen_buffer_base {
+	struct Standart_screen : Surface_base {
 		int width();
 		int height();
 		Lengths lengths();
@@ -167,7 +188,7 @@ namespace gcons {
 	};
 
 	struct View_ {
-		Screen_buffer screen_buffer;
+		Surface surface;
 		Items items;
 
 		void hide();
@@ -187,6 +208,8 @@ namespace gcons {
 	};
 
 	struct View {
+		View() { }
+
 		friend Views;
 
 		View_* operator -> ();
@@ -194,7 +217,7 @@ namespace gcons {
 	private:
 		View(int n);
 
-		int i;
+		int i = -1;
 	};
 
 	struct Views {
