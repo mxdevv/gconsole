@@ -13,8 +13,6 @@ namespace gcons {
 	namespace ncurses {
 		#include <ncurses.h>
 	}
-	namespace Menu { }
-
 	enum struct Color;
 	enum struct Direction;
 	struct Color_pair;

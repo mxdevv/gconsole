@@ -551,16 +551,20 @@ namespace gcons {
 		}
 	}
 
-	void Item::draw()
-	{
-		;
-	}
-	
 	void Items::draw()
 	{
 		for(Item& item : items)
 			item.draw();
 	}
+
+	Items::Band::Band(Coords xy, Lengths lengths, Distance range_value, int value)
+		: xy{xy}, lengths{lengths}, range_value{range_value}, value{value}
+	{ }
+	
+	void Items::Band::draw()
+	{
+		;
+	}	
 
 	View::View(int n)
 		: i{n}
